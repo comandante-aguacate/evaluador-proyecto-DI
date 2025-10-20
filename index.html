@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evaluador de Proyecto de Diseño Industrial</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(60deg, #108fbd 0%, #092c8b 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 2px;
+            padding: 40px;
+            max-width: 700px;
+            width: 100%;
+            box-shadow: 0 20px 25px rgba(2, 22, 120, 0.397);
+        }
+
+        h1 {
+            color: #186dc1;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            color: #186dc1;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .start-screen, .question-screen, .result-screen {
+            text-align: center;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .instruction {
+            font-size: 1.2em;
+            color: #555;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .question {
+            font-size: 1.4em;
+            color: #333;
+            margin-bottom: 30px;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+
+        .btn {
+            background: linear-gradient(60deg, #07448d 0%, #0080ff 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.1em;
+            border-radius: 30px;
+            cursor: pointer;
+            margin: 10px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: 600;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 10px rgba(69, 162, 255, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        }
+
+        .btn-small {
+            padding: 10px 25px;
+            font-size: 0.9em;
+        }
+
+        .btn.comenzar {
+            border-radius: 2px;
+        }
+
+        .result {
+            margin: 30px 0;
+        }
+
+        .result-title {
+            font-size: 2.2em;
+            color: #2c3e50;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .result-emoji {
+            font-size: 4em;
+            margin: 20px 0;
+        }
+
+        .result-text {
+            font-size: 1.1em;
+            color: #555;
+            margin-bottom: 20px;
+            line-height: 1.6;
+            text-align: left;
+        }
+
+        .progress {
+            background: #e0e0e0;
+            height: 8px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            background: linear-gradient(45deg, #24736c 0%, #78c0a1 100%);
+            height: 100%;
+            transition: width 0.3s;
+            border-radius: 10px;
+        }
+
+        .question-count {
+            color: #888;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        .score {
+            font-size: 3em;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .excellent { color: #27ae60; }
+        .good { color: #3498db; }
+        .average { color: #f39c12; }
+        .poor { color: #e74c3c; }
+
+        .categories {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .category-tag {
+            background: #ecf0f1;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Evaluador de Proyecto de Diseño Industrial</h1>
+        
+        <div id="startScreen" class="start-screen">
+            <p class="instruction">Evalúa tu proyecto de diseño industrial respondiendo 50 preguntas</p>
+            <button class="btn comenzar" onclick="startGame()">Comenzar Evaluación 👉</button>
+        </div>
+
+        <div id="questionScreen" class="question-screen hidden">
+            <div class="question-count" id="questionCount">Pregunta 1</div>
+            <div class="progress">
+                <div class="progress-bar" id="progressBar" style="width: 0%"></div>
+            </div>
+            <p class="question" id="question"></p>
+            <button class="btn" onclick="answer('yes')">Sí</button>
+            <button class="btn btn-secondary" onclick="answer('no')">No</button>
+            <br>
+            <button class="btn btn-small" onclick="answer('idk')" style="margin-top: 20px;">Parcialmente</button>
+        </div>
+        <div id="resultScreen" class="result-screen hidden">
+            <div class="result-emoji" id="resultEmoji"></div>
+            <div class="result-title" id="resultTitle"></div>
+            <div class="score" id="resultScore"></div>
+            <div class="categories" id="resultCategories"></div>
+            <div class="result-text" id="resultDescription"></div>
+            <button class="btn" onclick="resetGame()">Evaluar Otro Proyecto</button>
+        </div>
+    </div>
+
+    <script>
+    let answers = [];
+        let currentQuestionIndex = 0;
+        const allQuestions = [
+            "¿El diseño permite o fomenta la personalización, adaptación o apropiación por parte del usuario para que se sienta único y conectado a él?",
+            "¿El producto ayuda al usuario a contar una historia sobre sí mismo, sus valores o sus aspiraciones?",
+            "¿El diseño facilita que el usuario aprenda, mejore o desarrolle una nueva habilidad o competencia?",
+            "¿La interacción con el producto es tan absorbente y satisfactoria que puede hacer que el usuario pierda la noción del tiempo?",
+            "¿El diseño deleita intencionadamente los sentidos (vista, tacto, oído, olor)?",
+            "¿El producto actúa como un catalizador para conectar a las personas, fomentando la interacción y la comunidad?",
+            "¿Usar el producto genera una sensación de logro, confianza o seguridad en el usuario?",
+            "¿El diseño promueve explícitamente comportamientos éticos, sostenibles o prosociales?",
+            "¿El producto invita o ayuda al usuario a reflexionar sobre sus propios hábitos, metas o bienestar?",
+            "¿El diseño trasciende la funcionalidad inmediata, contribuyendo a un sentido de propósito o legado para el usuario?",
+            "¿El proyecto se basa en una tendencia emergente (tecnológica, social, medioambiental) o anticipa un cambio en el estilo de vida?",
+            "¿Se ha considerado cómo se integrará el producto en la vida de las personas dentro de 5, 10 o 15 años?",
+            "¿El diseño es lo suficientemente flexible como para evolucionar o adaptarse a contextos futuros imprevistos?",
+            "¿El proyecto desafía el statu quo y presenta una visión alternativa y deseable del futuro?",
+            "¿El diseño considera y mitiga posibles consecuencias negativas o usos indebidos en un futuro?",
+            "¿La propuesta es viable no solo económica, sino también social y medioambientalmente a largo plazo?",
+            "¿La investigación del proyecto identificó señales débiles (indicios de cambios futuros) que lo informan?",
+            "¿El proyecto cuenta una historia convincente sobre el futuro para el que está diseñado?",
+            "¿El diseño fomenta la resiliencia, ayudando a los usuarios a afrontar mejor la incertidumbre o los cambios?",
+            "¿El producto podría convertirse en un ícono o un símbolo de la época futura que representa?",
+            "¿El diseño satisface plenamente las necesidades fisiológicas básicas (como el confort térmico o la comodidad postural)?",
+            "¿El producto proporciona una sensación de seguridad, protección y fiabilidad?",
+            "¿El diseño opera de manera intuitiva, requiriendo un mínimo esfuerzo mental y eliminando la frustración?",
+            "¿La interacción con el producto es socialmente gratificante y fomenta vínculos?",
+            "¿El diseño ofrece un placer profundo al proporcionar significado, propósito o conexión emocional duradera?",
+            "¿El producto ofrece más de un tipo de placer de manera integrada?",
+            "¿Se ha priorizado qué tipo(s) de placer(es) son los más críticos para el éxito de este producto en particular?",
+            "¿El diseño evita sacrificar un placer inferior (como la comodidad) por uno superior (como el estatus) de manera contraproducente?",
+            "¿La experiencia de usuario evoluciona, ofreciendo diferentes niveles de placer a medida que el usuario se familiariza con el producto?",
+            "¿El producto crea una sensación de completitud o satisfacción holística para el usuario?",
+            "¿El aspecto inicial del diseño (forma, color, textura) provoca una reacción emocional inmediata y positiva?",
+            "¿La apariencia del producto es apropiada para su contexto de uso y público objetivo?",
+            "¿El producto es fácil y intuitivo de usar, generando una sensación de maestría y control?",
+            "¿La funcionalidad del producto es claramente comprensible y accesible (es decir, es usable)?",
+            "¿La interacción física con el producto (el tacto, el sonido) resulta satisfactoria y de calidad?",
+            "¿El diseño proporciona retroalimentación (visual, táctil, auditiva) que informa al usuario sobre el resultado de sus acciones?",
+            "¿El producto hace que el usuario se sienta bien consigo mismo al usarlo o poseerlo?",
+            "¿El diseño comunica un estatus, pertenencia a un grupo o un valor con el que el usuario quiere identificarse?",
+            "¿El producto evoca recuerdos positivos o aspiraciones personales en el usuario?",
+            "¿La historia detrás del diseño, su marca o su impacto social, contribuye positivamente a la percepción del usuario?",
+            "¿La solución demuestra una comprensión profunda de las necesidades, deseos y contextos reales de los usuarios?",
+            "¿Se identificaron claramente los puntos de dolor (pains) y las ganancias (gains) del usuario durante la investigación?",
+            "¿El proyecto tiene un Point of View (POV) claro y centrado en el usuario que guía todas las decisiones de diseño?",
+            "¿El brief o enunciado de diseño sintetiza la información de la investigación en una oportunidad concreta e inspiradora?",
+            "¿El proceso de ideación exploró una amplia gama de soluciones, incluyendo algunas audaces o poco convencionales?",
+            "¿La solución final es claramente diferente y ofrece más valor que las soluciones existentes en el mercado?",
+            "¿Se utilizaron prototipos (físicos o digitales) de forma iterativa para probar y refinar las ideas clave?",
+            "¿La solución fue probada con usuarios reales, y su feedback se incorporó directamente en el diseño final?",
+            "¿El proyecto muestra evidencia de evolución y mejora basada en el aprendizaje continuo y la prueba de supuestos?",
+            "¿La solución propuesta es técnicamente realizable y considera las limitaciones de fabricación y costos?"
+        ];
+        const totalQuestions = allQuestions.length;
+
+        function startGame() {
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('questionScreen').classList.remove('hidden');
+            answers = [];
+            currentQuestionIndex = 0;
+            displayQuestion();
+        }
+
+        function displayQuestion() {
+            document.getElementById('questionCount').textContent = `Pregunta ${currentQuestionIndex + 1} de ${totalQuestions}`;
+            document.getElementById('question').textContent = allQuestions[currentQuestionIndex];
+            
+            const progress = ((currentQuestionIndex + 1) / totalQuestions) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        function answer(response) {
+            // Store answer: yes = 1, no = 0, idk = 0.5
+            if (response === 'yes') {
+                answers.push(1);
+            } else if (response === 'no') {
+                answers.push(0);
+            } else {
+                answers.push(0.5);
+            }
+
+            currentQuestionIndex++;
+
+            if (currentQuestionIndex < totalQuestions) {
+                displayQuestion();
+            } else {
+                calculateResult();
+            }
+        }
+
+        function calculateResult() {
+            // Calculate total score
+            const totalScore = answers.reduce((sum, val) => sum + val, 0);
+            const percentage = (totalScore / totalQuestions) * 100;
+            
+            // Determine result based on score
+            let result;
+            
+            if (percentage >= 90) {
+                result = {
+                    title: "Diseño Excepcional - Nivel Maestro",
+                    emoji: "🏆",
+                    score: Math.round(percentage) + "/100",
+                    class: "excellent",
+                    categories: ["Excelencia", "Holístico", "Visionario", "Centrado en Usuario"],
+                    description: `Tu proyecto alcanza la excelencia en diseño industrial. Con un ${Math.round(percentage)}% de evaluación positiva, has demostrado maestría en todos los aspectos: desde la investigación de usuarios hasta la viabilidad técnica, pasando por la innovación y el impacto social. Tu diseño no solo resuelve problemas, sino que trasciende creando experiencias memorables y significativas. Este nivel de integración holística entre funcionalidad, estética, sostenibilidad y visión de futuro posiciona tu proyecto como referente en la disciplina.`
+                };
+            } else if (percentage >= 80) {
+                result = {
+                    title: "Diseño Sobresaliente - Nivel Avanzado",
+                    emoji: "⭐",
+                    score: Math.round(percentage) + "/100",
+                    class: "excellent",
+                    categories: ["Sobresaliente", "Completo", "Innovador"],
+                    description: `Excelente trabajo con un ${Math.round(percentage)}% de evaluación positiva. Tu proyecto demuestra solidez en la mayoría de dimensiones del diseño industrial. Has logrado equilibrar aspectos técnicos, humanos y contextuales de manera profesional. Para alcanzar la excelencia total, identifica las áreas con respuestas negativas y profundiza en ellas: puede ser investigación de usuarios, visión de futuro, o aspectos de placer y experiencia. Tu proyecto está muy cerca de ser excepcional.`
+                };
+            } else if (percentage >= 70) {
+                result = {
+                    title: "Diseño Competente - Nivel Profesional",
+                    emoji: "✨",
+                    score: Math.round(percentage) + "/100",
+                    class: "good",
+                    categories: ["Competente", "Sólido", "Funcional"],
+                    description: `Buen proyecto con un ${Math.round(percentage)}% de evaluación positiva. Tu diseño tiene fundamentos sólidos y cumple con estándares profesionales. Has atendido aspectos importantes de funcionalidad, usabilidad y viabilidad. Sin embargo, hay oportunidades significativas de mejora en áreas como innovación, investigación de usuarios, visión de futuro, o experiencia emocional. Revisa las preguntas con respuestas negativas y desarrolla un plan para fortalecer esas dimensiones. Con refinamiento, tu proyecto puede alcanzar nivel sobresaliente.`
+                };
+            } else if (percentage >= 60) {
+                result = {
+                    title: "Diseño en Desarrollo - Nivel Intermedio",
+                    emoji: "🔨",
+                    score: Math.round(percentage) + "/100",
+                    class: "good",
+                    categories: ["En Desarrollo", "Potencial", "Mejorable"],
+                    description: `Tu proyecto obtiene un ${Math.round(percentage)}%, indicando que está en desarrollo con áreas importantes que necesitan atención. Has trabajado algunos aspectos del diseño, pero faltan dimensiones fundamentales. Prioriza: 1) Investigación profunda de usuarios (necesidades, contextos, dolores), 2) Definición clara de propuesta de valor, 3) Prototipado y validación iterativa, 4) Consideración de aspectos experienciales y emocionales. No te desanimes: identificar áreas de mejora es el primer paso. Enfócate en fortalecer los fundamentos antes de avanzar a complejidades.`
+                };
+            } else if (percentage >= 50) {
+                result = {
+                    title: "Diseño Básico - Requiere Desarrollo",
+                    emoji: "📋",
+                    score: Math.round(percentage) + "/100",
+                    class: "average",
+                    categories: ["Básico", "Inicial", "Conceptual"],
+                    description: `Con un ${Math.round(percentage)}%, tu proyecto está en etapa conceptual temprana y requiere desarrollo sustancial. Has comenzado el proceso, pero faltan pilares fundamentales del diseño industrial. Recomendaciones críticas: 1) Realiza investigación etnográfica profunda con usuarios reales, 2) Define claramente el problema que resuelves, 3) Explora múltiples alternativas de solución mediante ideación, 4) Crea y prueba prototipos iterativamente, 5) Documenta decisiones de diseño. Considera buscar mentoría o revisar metodologías como Design Thinking o Human-Centered Design. El camino es largo pero alcanzable con dedicación y método.`
+                };
+            } else {
+                result = {
+                    title: "Proyecto Inicial - Necesita Redirección",
+                    emoji: "🚧",
+                    score: Math.round(percentage) + "/100",
+                    class: "poor",
+                    categories: ["Inicial", "Crítico", "Replantear"],
+                    description: `Tu proyecto obtiene ${Math.round(percentage)}%, indicando que necesita redirección fundamental. Actualmente carece de elementos esenciales del diseño industrial profesional. Es momento de replantear el enfoque desde cero: 1) INVESTIGACIÓN: Sal al campo, observa, entrevista usuarios reales, identifica necesidades genuinas. 2) PROBLEMA: Define claramente qué problema resuelves y para quién. 3) PROCESO: Sigue metodología estructurada (Design Thinking, Doble Diamante). 4) VALIDACIÓN: Nada sin prototipar y probar con usuarios. 5) MENTORÍA: Busca retroalimentación constante de profesionales. No avances sin bases sólidas. El diseño industrial requiere rigor, empatía y método. Toma esto como oportunidad de aprendizaje profundo.`
+                };
+            }
+            
+            showResult(result);
+        }
+
+        function showResult(result) {
+            document.getElementById('questionScreen').classList.add('hidden');
+            document.getElementById('resultScreen').classList.remove('hidden');
+            
+            document.getElementById('resultEmoji').textContent = result.emoji;
+            document.getElementById('resultTitle').textContent = result.title;
+            document.getElementById('resultScore').textContent = result.score;
+            document.getElementById('resultScore').className = 'score ' + result.class;
+            document.getElementById('resultDescription').textContent = result.description;
+            
+            const categoriesContainer = document.getElementById('resultCategories');
+            categoriesContainer.innerHTML = '';
+            result.categories.forEach(cat => {
+                const tag = document.createElement('div');
+                tag.className = 'category-tag';
+                tag.textContent = cat;
+                categoriesContainer.appendChild(tag);
+            });
+        }
+
+        function resetGame() {
+            document.getElementById('resultScreen').classList.add('hidden');
+            document.getElementById('startScreen').classList.remove('hidden');
+            answers = [];
+            currentQuestionIndex = 0;
+        }
+    </script>
+
+</body>
+</html>
